@@ -6,15 +6,18 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/xlab/treeprint"
 )
 
 type Resultado struct {
-	Lexico     []Token  `json:"lexico"`
-	Sintactico string   `json:"sintactico"`
-	Semantico  string   `json:"semantico"`
-	C3D        []string `json:"c3d"`
-	Arbol      string   `json:"arbol"`
-	Error      string   `json:"error"`
+	Lexico     []Token   `json:"lexico"`
+	Sintactico string    `json:"sintactico"`
+	Semantico  string    `json:"semantico"`
+	C3D        []string  `json:"c3d"`
+	Arbol      string    `json:"arbol"`
+	ArbolJSON  *NodoJSON `json:"arbolJson,omitempty"`
+	Error      string    `json:"error"`
 }
 
 type Token struct {
@@ -27,6 +30,12 @@ type Nodo struct {
 	Izq        *Nodo
 	Der        *Nodo
 	EsOperador bool
+}
+
+type NodoJSON struct {
+	Valor string    `json:"valor"`
+	Izq   *NodoJSON `json:"izq,omitempty"`
+	Der   *NodoJSON `json:"der,omitempty"`
 }
 
 var variables = map[string]bool{
@@ -73,7 +82,6 @@ func analizarLexico(expr string) ([]Token, error) {
 		{"ASIGNACION", `=`},
 		{"MULTIPLICACION", `\*`},
 		{"SUMA", `\+`},
-		{"RESTA", `-`},
 		{"PARENTESIS", `[()]{1}`},
 	}
 
@@ -91,6 +99,11 @@ func analizarLexico(expr string) ([]Token, error) {
 			matches := regex.FindStringIndex(expr[posicion:])
 			if matches != nil {
 				valor := expr[posicion : posicion+matches[1]]
+				if p.tipo == "IDENTIFICADOR" {
+					if _, existe := variables[valor]; !existe {
+						return nil, fmt.Errorf("identificador inválido: %s", valor)
+					}
+				}
 				tokens = append(tokens, Token{p.tipo, valor})
 				posicion += matches[1]
 				encontrado = true
@@ -162,7 +175,7 @@ func (p *Parser) parseAdicion() (*Nodo, error) {
 		return nil, err
 	}
 
-	for p.actual().Tipo == "SUMA" || p.actual().Tipo == "RESTA" {
+	for p.actual().Tipo == "SUMA" {
 		op := p.actual().Valor
 		p.avanzar()
 		der, err := p.parseTerm()
@@ -235,10 +248,7 @@ func verificarVariable(nodo *Nodo) error {
 			return nil
 		}
 		if _, existe := variables[nodo.Valor]; !existe {
-			// Es identificador no declarado
-			if nodo.Valor != "iva" && nodo.Valor != "subtotal" && nodo.Valor != "retencion" {
-				return fmt.Errorf("❌ variable no declarada: %s", nodo.Valor)
-			}
+			return fmt.Errorf("❌ variable no declarada: %s", nodo.Valor)
 		}
 		return nil
 	}
@@ -303,34 +313,38 @@ func generarArbol(nodo *Nodo) string {
 	if nodo == nil {
 		return ""
 	}
-	return generarArbolRec(nodo, 0, true)
+
+	root := treeprint.New()
+	root.SetValue(nodo.Valor)
+	agregarRama(root, nodo)
+	return root.String()
 }
 
-func generarArbolRec(nodo *Nodo, profundidad int, esUltimo bool) string {
+func agregarRama(tree treeprint.Tree, nodo *Nodo) {
 	if nodo == nil {
-		return ""
+		return
 	}
-
-	indent := ""
-	if profundidad > 0 {
-		indent = strings.Repeat("  ", profundidad-1)
-		if esUltimo {
-			indent += "└─ "
-		} else {
-			indent += "├─ "
-		}
-	}
-
-	resultado := indent + nodo.Valor + "\n"
 
 	if nodo.Izq != nil {
-		resultado += generarArbolRec(nodo.Izq, profundidad+1, nodo.Der == nil)
+		branch := tree.AddBranch(nodo.Izq.Valor)
+		agregarRama(branch, nodo.Izq)
 	}
 	if nodo.Der != nil {
-		resultado += generarArbolRec(nodo.Der, profundidad+1, true)
+		branch := tree.AddBranch(nodo.Der.Valor)
+		agregarRama(branch, nodo.Der)
+	}
+}
+
+func convertirNodoJSON(nodo *Nodo) *NodoJSON {
+	if nodo == nil {
+		return nil
 	}
 
-	return resultado
+	return &NodoJSON{
+		Valor: nodo.Valor,
+		Izq:   convertirNodoJSON(nodo.Izq),
+		Der:   convertirNodoJSON(nodo.Der),
+	}
 }
 
 // FUNCIONES AUXILIARES
@@ -379,12 +393,16 @@ func analizar(expr string) Resultado {
 	// GENERAR ÁRBOL ASCII
 	arbolStr := generarArbol(arbol)
 
+	// GENERAR ÁRBOL JSON
+	arbolJSON := convertirNodoJSON(arbol)
+
 	return Resultado{
 		Lexico:     tokens,
 		Sintactico: "✔ Sintaxis correcta",
 		Semantico:  "✔ Variables válidas e inicializadas",
 		C3D:        c3d,
 		Arbol:      arbolStr,
+		ArbolJSON:  arbolJSON,
 		Error:      "",
 	}
 }
