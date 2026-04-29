@@ -1,8 +1,8 @@
-# 🧠 Analizador Léxico, Sintáctico, Semántico y Generador de C3D para IVA Acumulado
+# Analizador Léxico, Sintáctico, Semántico y Generador de C3D para IVA Acumulado
 
-## 📋 Requisitos Cumplidos
+## Requisitos Cumplidos
 
-### ✅ 1. Analizador Léxico (REAL)
+### 1. Analizador Léxico (REAL)
 - **Detecta tokens dinámicamente** desde la entrada del usuario
 - **Identifica tipos correctos:**
   - `IDENTIFICADOR`: variables (subtotal, retencion, iva)
@@ -13,7 +13,7 @@
   - `PARENTESIS`: `(`, `)`
 - **Salida:** Lista de tokens con tipo y valor
 
-### ✅ 2. Analizador Sintáctico (REAL)
+### 2. Analizador Sintáctico (REAL)
 - **Parser Recursive Descent** que construye un árbol de sintaxis
 - **Respeta precedencia de operadores:**
   - Multiplicación `*` tiene mayor precedencia que suma `+`
@@ -21,7 +21,7 @@
 - **Genera Árbol Sintáctico Abstracto (AST)** desde los tokens
 - **Validación de estructura gramatical**
 
-### ✅ 3. Analizador Semántico (REAL)
+### 3. Analizador Semántico (REAL)
 - **Verifica que las variables estén declaradas**
 - **Variables de entrada reconocidas:**
   - `subtotal` ✓
@@ -29,7 +29,7 @@
 - **Valida que los identificadores desconocidos no se usen**
 - **Detecta errores de variables no inicializadas**
 
-### ✅ 4. Código Intermedio de 3 Direcciones (C3D)
+### 4. Código Intermedio de 3 Direcciones (C3D)
 ```
 → t1 = subtotal * 0.16
 → t2 = t1 + retencion
@@ -38,7 +38,7 @@
 
 **3 variables temporales mínimas:** `t1`, `t2` (y resultado final)
 
-### ✅ 5. Árbol de Análisis Sintáctico
+### 5. Árbol de Análisis Sintáctico
 Genera un árbol ASCII mostrando:
 - Operadores internos
 - Operandos en hojas
@@ -55,7 +55,7 @@ Genera un árbol ASCII mostrando:
 
 ---
 
-## 🚀 Cómo Usar
+## Cómo Usar
 
 ### Backend (Go)
 ```bash
@@ -72,7 +72,7 @@ Accede a la interfaz web y:
 
 ---
 
-## 📐 Fases del Análisis Completo
+## Fases del Análisis Completo
 
 ```
 INPUT: "subtotal * 0.16 + retencion"
@@ -107,7 +107,7 @@ INPUT: "subtotal * 0.16 + retencion"
 
 ---
 
-## 🔧 Estructura Técnica
+## Estructura Técnica
 
 ### Go (Backend)
 - **analizarLexico()**: Tokeniza la expresión con regex
@@ -123,16 +123,16 @@ INPUT: "subtotal * 0.16 + retencion"
 
 ---
 
-## 📝 Ejemplos de Entrada
+## Ejemplos de Entrada
 
-### ✅ Válido:
+### Válido:
 ```
 subtotal * 0.16 + retencion
 (subtotal + retencion) * 0.16
 subtotal * 0.16
 ```
 
-### ❌ Inválido:
+### Inválido:
 ```
 subtotal * 0.16 + desconocida    → variable no declarada
 subtotal * 0.16)                 → paréntesis no cerrado
@@ -141,7 +141,7 @@ subtotal * 0.16)                 → paréntesis no cerrado
 
 ---
 
-## 📊 Conceptos Implementados
+## Conceptos Implementados
 
 | Concepto | Implementación |
 |----------|---|
@@ -151,14 +151,3 @@ subtotal * 0.16)                 → paréntesis no cerrado
 | **C3D** | Recorrido postorden generando 3AC |
 | **AST** | Estructura de nodos con operadores y operandos |
 
----
-
-## ✨ Mejoras Implementadas
-
-✅ Análisis REAL de entrada (no hardcoded)
-✅ Árbol dinámico basado en precedencia
-✅ Validación de variables
-✅ Mensajes de error descriptivos
-✅ Interfaz mejorada con estilos
-✅ Visualización de tokens tipados
-✅ C3D con lógica de transversal postorden
